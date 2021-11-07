@@ -71,6 +71,7 @@ type Slacker struct {
 	defaultMessageHandler   func(botCtx BotContext, request Request, response ResponseWriter)
 	defaultEventHandler     func(interface{})
 	errUnauthorized         error
+	messageCheckHandler     func(botCtx BotContext, message string) bool
 	commandChannel          chan *CommandEvent
 	appID                   string
 	botInteractionMode      BotInteractionMode
@@ -109,6 +110,11 @@ func (s *Slacker) Interactive(interactiveEventHandler func(*Slacker, *socketmode
 // CustomBotContext creates a new bot context
 func (s *Slacker) CustomBotContext(botContextConstructor func(ctx context.Context, api *slack.Client, client *socketmode.Client, evt *MessageEvent) BotContext) {
 	s.botContextConstructor = botContextConstructor
+}
+
+// CustomMessageCheckHandler adds a custom message check handler to the bot
+func (s *Slacker) CustomMessageCheckHandler(messageCheckHandler func(botCtx BotContext, message string) bool) {
+	s.messageCheckHandler = messageCheckHandler
 }
 
 // CustomRequest creates a new request
@@ -331,6 +337,12 @@ func (s *Slacker) handleMessageEvent(ctx context.Context, evt interface{}) {
 	response := s.responseConstructor(botCtx)
 
 	for _, cmd := range s.botCommands {
+		if s.messageCheckHandler != nil {
+			if !s.messageCheckHandler(botCtx, ev.Text) {
+				return
+			}
+		}
+
 		parameters, isMatch := cmd.Match(ev.Text)
 		if !isMatch {
 			continue

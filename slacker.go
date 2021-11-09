@@ -69,6 +69,7 @@ type Slacker struct {
 	interactiveEventHandler func(*Slacker, *socketmode.Event, *slack.InteractionCallback)
 	helpDefinition          *CommandDefinition
 	helpCommand             string
+	helpInThread            bool
 	defaultMessageHandler   func(botCtx BotContext, request Request, response ResponseWriter)
 	defaultEventHandler     func(interface{})
 	errUnauthorized         error
@@ -106,6 +107,11 @@ func (s *Slacker) Err(errorHandler func(err string)) {
 // HelpCommand assigns a new HelpCommand to override the default `help`
 func (s *Slacker) HelpCommand(helpCommand string) {
 	s.helpCommand = helpCommand
+}
+
+// Should the HelpCommand respond in a thread?
+func (s *Slacker) HelpInThread(helpInThread bool) {
+	s.helpInThread = helpInThread
 }
 
 // Interactive assigns an interactive event handler
@@ -278,7 +284,7 @@ func (s *Slacker) defaultHelp(botCtx BotContext, request Request, response Respo
 	if authorizedCommandAvailable {
 		helpMessage += fmt.Sprintf(codeMessageFormat, star+space+authorizedUsersOnly) + newLine
 	}
-	response.Reply(helpMessage)
+	response.Reply(helpMessage, WithThreadReply(s.helpInThread))
 }
 
 func (s *Slacker) prependHelpHandle() {

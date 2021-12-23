@@ -111,21 +111,14 @@ func (s *Slacker) Err(errorHandler func(err string)) {
 	s.errorHandler = errorHandler
 }
 
-<<<<<<< HEAD
 // HelpCommand assigns a new HelpCommand to override the default `help`
 func (s *Slacker) HelpCommand(helpCommand string) {
 	s.helpCommand = helpCommand
-=======
-<<<<<<< HEAD
+}
+
 // CleanEventInput allows the api consumer to override the default event input cleaning behavior
 func (s *Slacker) CleanEventInput(cei func(in string) string) {
 	s.cleanEventInput = cei
-=======
-// HelpCommand assigns a new HelpCommand to override the default `help`
-func (s *Slacker) HelpCommand(helpCommand string) {
-	s.helpCommand = helpCommand
->>>>>>> 3da43fd (Allow override help commands)
->>>>>>> shomali11-master
 }
 
 // Should the HelpCommand respond in a thread?

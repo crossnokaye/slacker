@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/shomali11/proper"
 	"github.com/slack-go/slack"
@@ -32,6 +33,10 @@ var (
 	errUnauthorized = errors.New("you are not authorized to execute this command")
 )
 
+func defaultCleanEventInput(msg string) string {
+	return strings.ReplaceAll(msg, "\u00a0", " ")
+}
+
 // NewClient creates a new client using the Slack API
 func NewClient(botToken, appToken string, options ...ClientOption) *Slacker {
 	defaults := newClientDefaults(options...)
@@ -52,6 +57,7 @@ func NewClient(botToken, appToken string, options ...ClientOption) *Slacker {
 		commandChannel:     make(chan *CommandEvent, 100),
 		errUnauthorized:    errUnauthorized,
 		botInteractionMode: defaults.BotMode,
+		cleanEventInput:    defaultCleanEventInput,
 	}
 	return slacker
 }
@@ -77,6 +83,7 @@ type Slacker struct {
 	commandChannel          chan *CommandEvent
 	appID                   string
 	botInteractionMode      BotInteractionMode
+	cleanEventInput         func(in string) string
 }
 
 // BotCommands returns Bot Commands
@@ -104,9 +111,21 @@ func (s *Slacker) Err(errorHandler func(err string)) {
 	s.errorHandler = errorHandler
 }
 
+<<<<<<< HEAD
 // HelpCommand assigns a new HelpCommand to override the default `help`
 func (s *Slacker) HelpCommand(helpCommand string) {
 	s.helpCommand = helpCommand
+=======
+<<<<<<< HEAD
+// CleanEventInput allows the api consumer to override the default event input cleaning behavior
+func (s *Slacker) CleanEventInput(cei func(in string) string) {
+	s.cleanEventInput = cei
+=======
+// HelpCommand assigns a new HelpCommand to override the default `help`
+func (s *Slacker) HelpCommand(helpCommand string) {
+	s.helpCommand = helpCommand
+>>>>>>> 3da43fd (Allow override help commands)
+>>>>>>> shomali11-master
 }
 
 // Should the HelpCommand respond in a thread?
@@ -355,14 +374,16 @@ func (s *Slacker) handleMessageEvent(ctx context.Context, evt interface{}) {
 	botCtx := s.botContextConstructor(ctx, s.client, s.socketModeClient, ev)
 	response := s.responseConstructor(botCtx)
 
+	eventTxt := s.cleanEventInput(ev.Text)
+
 	for _, cmd := range s.botCommands {
 		if s.messageCheckHandler != nil {
-			if !s.messageCheckHandler(botCtx, ev.Text) {
+			if !s.messageCheckHandler(botCtx, eventTxt) {
 				return
 			}
 		}
 
-		parameters, isMatch := cmd.Match(ev.Text)
+		parameters, isMatch := cmd.Match(eventTxt)
 		if !isMatch {
 			continue
 		}
